@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+
+  site:
+    image: flt-dev
+    build:
+      context: .
+      target: dev
+    command: ["make", "serve"]
+    env_file: shared.env
+    environment:
+      - NODE_ENV=development
+      - JEKYLL_ENV=development
+      - DISABLE_TESTS=$DISABLE_TESTS
+      - FIREBASE_ALIAS=$FIREBASE_ALIAS
+      - FIREBASE_TOKEN=$FIREBASE_TOKEN
+    ports:
+      - "4002:4002"
+      - "35729:35729"
+      - "5500:5500"
+    volumes:
+      - ./:/app
+      - site_bundle:/usr/local/bundle
+
+volumes:
+  site_bundle:

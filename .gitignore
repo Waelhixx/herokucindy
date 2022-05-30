@@ -1,0 +1,22 @@
+_site
+.*-cache
+.*-metadata
+.DS_Store
+.env
+.firebase/
+.idea/
+.vscode/
+*.log
+*.swp
+build
+node_modules
+
+# Dart and Flutter, build related
+.dart_tool
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+example.g
+pubspec.lock
+tmp/
+_config_stage.yml

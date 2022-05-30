@@ -1,0 +1,72 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "0 0 * * 0"
+
+# Declare default permissions as read only.
+permissions: read-all
+
+env:
+  NODE_ENV: production
+  NODE_VERSION: 17
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    if: github.repository == 'flutter/website'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Beta channel"
+            channel: beta
+            experimental: true
+          - name: "Stable channel"
+            channel: stable
+            experimental: false
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+      - name: Test
+        run: make test
+        env:
+          TEST_TARGET_CHANNEL: ${{ matrix.channel }}
+        continue-on-error: ${{ matrix.experimental }}
+
+  deploy:
+    needs: test
+    concurrency: 
+      group: prod-deploy-group
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push'
+      && github.ref == 'refs/heads/main'
+      && github.repository == 'flutter/website'
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+        with:
+          submodules: "recursive"
+      - name: Install Node
+        uses: actions/setup-node@17f8bd926464a1afa4c6a11669539e9c1ba77048
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install firebase tools
+        run: npm ci
+      - name: Update path
+        run: echo "./node_modules/.bin/" >> $GITHUB_PATH
+      - name: Build
+        run: make build
+        env:
+          DISABLE_TESTS: 1
+      - name: Deploy
+        run: make deploy
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_ALIAS: default
